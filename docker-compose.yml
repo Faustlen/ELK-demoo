@@ -1,8 +1,8 @@
 version: '3.7'
 services:
-  elasticsearch:
+  search-engine:
     image: elastic/elasticsearch:8.10.0
-    container_name: elasticsearch
+    container_name: search-engine
     environment:
       - discovery.type=single-node
       - bootstrap.memory_lock=true
@@ -13,39 +13,39 @@ services:
     ports:
       - "9200:9200"
     networks:
-      - elk
+      - logging-network
 
-  logstash:
+  log-processor:
     image: logstash:8.10.1
-    container_name: logstash
+    container_name: log-processor
     volumes:
       - ./logs:/logs
       - ./logstash.conf:/usr/share/logstash/pipeline/logstash.conf
     ports:
       - "5044:5044"
     networks:
-      - elk
+      - logging-network
 
-  kibana:
+  dashboard:
     image: kibana:8.10.1
-    container_name: kibana
+    container_name: dashboard
     ports:
       - "5601:5601"
     networks:
-      - elk
+      - logging-network
     depends_on:
-      - elasticsearch
+      - search-engine
 
-  app:
+  web-service:
     build: .
-    container_name: spring-app
+    container_name: web-service
     ports:
       - "8080:8080"
     networks:
-      - elk
+      - logging-network
     depends_on:
-      - logstash
+      - log-processor
 
 networks:
-  elk:
+  logging-network:
     driver: bridge
